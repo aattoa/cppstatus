@@ -1,0 +1,5 @@
+out
+.cache
+configure.sh
+compile_commands.json
+*pdf
