@@ -8,6 +8,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME}
-    PRIVATE ${PROJECT_NAME}.cpp)
+    PRIVATE ${PROJECT_NAME}.cpp
+    PRIVATE configuration.hpp
+    PRIVATE block.hpp
+    PRIVATE callbacks.cpp)
 
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra" "-Wpedantic")
