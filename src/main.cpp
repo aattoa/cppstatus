@@ -8,22 +8,32 @@
 
 #include <X11/Xlib.h>
 
-namespace {
+namespace chrono = std::chrono;
 
-    constexpr auto blocks = std::to_array<cppstatus::Block>({
+namespace {
+    constexpr cppstatus::Block blocks[] {
         cppstatus::Block {
-            .callback = cppstatus::callbacks::time,
+            .callback = cppstatus::callbacks::command,
+            .argument = "amixer get Master | tail -1 | awk -F \"[][]\" '/%/ { print $2 \" \" $4 }'",
+            .format   = "Vol {}",
         },
-    });
+        cppstatus::Block {
+            .callback = cppstatus::callbacks::file_content,
+            .argument = "/sys/class/power_supply/BAT0/capacity",
+            .format   = "Bat {}%",
+        },
+        cppstatus::Block {
+            .callback = cppstatus::callbacks::date_time,
+            .argument = "{:%a %d %b, %T}",
+        },
+    };
 
     constexpr cppstatus::Configuration configuration {
         .blocks          = blocks,
-        .block_delimiter = " | ",
-        .left_padding    = {},
-        .right_padding   = {},
+        .block_delimiter = ", ",
     };
 
-    constexpr auto refresh_interval = std::chrono::seconds(1);
+    constexpr auto refresh_interval = chrono::seconds(1);
 
 } // namespace
 

@@ -8,8 +8,9 @@ namespace cppstatus {
     struct Block {
         using Out      = std::back_insert_iterator<std::string>;
         using Callback = auto(Out, char const*) -> void;
-        Callback*   callback {};
-        char const* argument {};
+        Callback*        callback {};
+        char const*      argument {};
+        std::string_view format;
     };
 
     struct Configuration {
@@ -24,5 +25,7 @@ namespace cppstatus {
 } // namespace cppstatus
 
 namespace cppstatus::callbacks {
-    Block::Callback time;
-}
+    Block::Callback date_time;
+    Block::Callback command;
+    Block::Callback file_content;
+} // namespace cppstatus::callbacks
