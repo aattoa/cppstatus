@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <memory>
+#include <algorithm>
 
 #include <cstdio>
 #include <cstdlib>
@@ -46,7 +47,7 @@ namespace {
     volatile std::sig_atomic_t keep_running = 1;
 } // namespace
 
-auto main() -> int
+auto main(int const argc, char const* const* const argv) -> int
 {
     // Gracefully handle termination requests
     std::signal(SIGTERM, [](int) { keep_running = 0; });
@@ -65,6 +66,9 @@ auto main() -> int
 
     Window const window = DefaultRootWindow(display.get());
 
+    bool const use_standard_output
+        = std::find(argv, argv + argc, std::string_view("--stdout")) != (argv + argc);
+
     std::string title;
     title.reserve(128);
 
@@ -76,8 +80,13 @@ auto main() -> int
         cppstatus::write_status(title, configuration);
 
         // Update the title
-        XStoreName(display.get(), window, title.c_str());
-        XFlush(display.get());
+        if (use_standard_output) {
+            std::puts(title.c_str());
+        }
+        else {
+            XStoreName(display.get(), window, title.c_str());
+            XFlush(display.get());
+        }
 
         auto const time_taken = chrono::system_clock::now() - begin_time;
         if (time_taken >= refresh_interval) [[unlikely]] {
