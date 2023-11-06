@@ -18,4 +18,4 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE X11)
 
 target_compile_options(${PROJECT_NAME}
-    PRIVATE "-Wall" "-Wextra" "-Wpedantic")
+    PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-Wno-missing-field-initializers")

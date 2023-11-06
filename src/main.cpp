@@ -25,6 +25,10 @@ namespace {
             .format   = "Bat {}%",
         },
         cppstatus::Block {
+            .callback = cppstatus::callbacks::file_content,
+            .argument = "/sys/class/power_supply/BAT0/status",
+        },
+        cppstatus::Block {
             .callback = cppstatus::callbacks::date_time,
             .argument = "{:%a %d %b, %T}",
         },
@@ -32,7 +36,9 @@ namespace {
 
     constexpr cppstatus::Configuration configuration {
         .blocks          = blocks,
-        .block_delimiter = ", ",
+        .block_delimiter = "] [",
+        .left_padding    = "[",
+        .right_padding   = "]",
     };
 
     constexpr auto refresh_interval = chrono::seconds(1);
