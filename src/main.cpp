@@ -1,11 +1,13 @@
 #include "status.hpp"
 
-#include <array>
-#include <thread>
-#include <cstdio>
 #include <chrono>
 #include <memory>
 
+#include <cstdio>
+#include <cstdlib>
+#include <csignal>
+
+#include <unistd.h>
 #include <X11/Xlib.h>
 
 namespace chrono = std::chrono;
@@ -35,18 +37,33 @@ namespace {
 
     constexpr auto refresh_interval = chrono::seconds(1);
 
+    volatile std::sig_atomic_t keep_running = 1;
 } // namespace
 
 auto main() -> int
 {
-    std::unique_ptr<Display, int (*)(Display*)> const display(XOpenDisplay(nullptr), XCloseDisplay);
-    Window const                                      window = DefaultRootWindow(display.get());
+    // Gracefully handle termination requests
+    std::signal(SIGTERM, [](int) { keep_running = 0; });
+    std::signal(SIGINT, [](int) { keep_running = 0; });
+
+    // Nominally handle SIGUSR1 so it will interrupt usleep
+    std::signal(SIGUSR1, [](int) {});
+
+    std::unique_ptr<Display, decltype(XCloseDisplay)*> const display(
+        XOpenDisplay(nullptr), XCloseDisplay);
+
+    if (!display) {
+        std::fprintf(stderr, "Could not open X display\n");
+        return EXIT_FAILURE;
+    }
+
+    Window const window = DefaultRootWindow(display.get());
 
     std::string title;
     title.reserve(128);
 
-    for (;;) {
-        auto const begin_time = std::chrono::system_clock::now();
+    while (keep_running) {
+        auto const begin_time = chrono::system_clock::now();
 
         // Format the new status bar
         title.clear();
@@ -56,9 +73,14 @@ auto main() -> int
         XStoreName(display.get(), window, title.c_str());
         XFlush(display.get());
 
-        auto const time_taken = std::chrono::system_clock::now() - begin_time;
-        if (time_taken < refresh_interval) {
-            std::this_thread::sleep_for(refresh_interval - time_taken);
+        auto const time_taken = chrono::system_clock::now() - begin_time;
+        if (time_taken >= refresh_interval) [[unlikely]] {
+            continue;
         }
+
+        // Wait until the status bar should be refreshed or until a signal is handled
+        auto const wait_time    = refresh_interval - time_taken;
+        auto const microseconds = chrono::duration_cast<chrono::microseconds>(wait_time);
+        usleep(microseconds.count());
     }
 }
